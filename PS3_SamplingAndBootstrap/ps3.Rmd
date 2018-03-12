@@ -1,0 +1,297 @@
+---
+title: "Problem Set 3 -- MATH392"
+author: "Theodore Dounias"
+date: "2/11/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(resampledata)
+
+f <- FishMercury
+```
+
+####4.8
+    
+```{r}
+z <- (4.6 - 6)/(sqrt(.5))
+
+p_hat <- pnorm(z, 0, 1)
+
+p_hat
+```
+    
+####4.9
+   
+I will first calculate mean and variance from the pdf. Then I will use the CLT approximation like above. For the mean:
+$$E(X) = \int_{2}^{6} xf(x)dx = \frac{3}{16}\int_{2}^{6}(x^3 -8x^2 +16x)dx =  \frac{3}{16}(\frac{1}{4}x^4-\frac{8}{3}x^3 +8x^2 \Big|_{2}^{6}) \approx 4$$
+   
+To calculate the variance, we will first calculate E(X^2):
+
+$$E(X^2) = \int_{2}^{6} x^2f(x)dx = \frac{3}{16}\int_{2}^{6}(x^4 -8x^3 +16x^2)dx =  \frac{3}{16}(\frac{1}{5}x^5-2x^4 +\frac{16}{3}x^3 \Big|_{2}^{6}) \approx 18.4 $$    
+    
+We then use CLT approximation:
+```{r}
+z <- (4.2 - 4)/(sqrt((18.4 - 16)/244))
+
+p_hat <- 1 - pnorm(z, 0, 1)
+
+p_hat
+```
+    
+####4.12
+    
+a. The expected value of the sample mean is equal to the population mean. In this case, therefore, it should be 10.
+   
+b. 
+```{r}
+it <- 1000
+n <- 30
+means <- rep(0, 1000)
+
+for(i in 1:it){
+  means[i] <- mean(rexp(30, 0.1))
+}
+
+#This asks for a "proportion" and not a p-value, so I will use the following formula:
+prop_b <- sum(means >= 12)/it
+prop_b
+```
+    
+c. "Unusual" is a hard word to wrap your head around. It certainly seems like this is a value that is not extreme, and so I would say that it is not unusual.
+   
+####4.13
+    
+a. From a widely accepted result that the sum of normal distributions is normal, we have: 
+$$\bar{X} \sim N(20, (\frac{8}{\sqrt{10}})),\space  \bar{Y} \sim N(16, (\frac{7}{\sqrt{15}}))$$
+   
+And so: 
+$$W \sim N(20+16, \sqrt{(\frac{7}{\sqrt{15}})^2 + (\frac{8}{\sqrt{10}})^2}) = N(36, 3.109^2)$$
+   
+b-c. I will use the code included in the book, I guess?
+```{r, fig.width=3, fig.height = 3}
+W <- numeric(1000)
+for(i in 1:1000){
+  x <- rnorm(10, 20, 8)
+  y <- rnorm(15, 16, 7)
+  W[i] <- mean(x) + mean(y)
+}
+
+mean(W)
+sd(W)
+hist(W)
+mean(W < 40)
+```
+   
+####4.18
+    
+a. For this I can just copy the revious code:
+```{r, fig.width=3, fig.height = 3}
+W <- numeric(1000)
+for(i in 1:1000){
+  x <- rexp(30, 1/3)
+  W[i] <- mean(x)
+}
+hist(W)
+```
+   
+b. Again, it is a common result that the sum of n iid exponential rv's follows a Gamma(L, n). Therefore we have:
+```{r}
+k <- 30
+lambda <- 1/3
+#Theoretical mean:
+1/lambda
+#Theoretical se
+se <- 1/(lambda*sqrt(k))
+se
+
+mean(W)
+sd(W)
+```
+    
+c. 
+```{r}
+prob <- sum(W <= 3.5)/1000
+prob
+```
+   
+d. 
+```{r}
+z <- (3.5 - 1/lambda)/se
+
+p_hat <- pnorm(z)
+
+p_hat
+```
+    
+####4.20
+    
+I will start from the cdf, and find the pdf by derivation to prove both of these expressions:
+$$F_{min}(x) = 1 - P(min[X_1, ..., X_n] \ge x) =_{iid} 1 - P(X_1 \ge x)P(X_2\ge x)...P(X_n \ge x) = 1 - (1 -F(x))^n $$
+    
+We can make this last step since $P(X_i \ge x) = 1 - P(X_i \le x) = 1 - F_{X_i}(x)$, and the Xi's are iid.
+    
+And so we get:
+$$f_{min}(x) = -n(1 -F(x))^{n-1}(-f(x)) = n(1 -F(x))^{n-1}f(x)$$
+    
+The second proof is exactly the same process, with the initial conversion being:
+$$F_{max}(x) = P(max[X_1, ..., X_n] \le x) =_{iid} P(X_1 \le x)P(X_2\le x)...P(X_n \le x) = F^n(x)$$
+     
+And so if we differentiate we get:
+$$f_{max} = (n-1)f(x)F^{n-1}(x) $$
+
+####4.21
+   
+We will first find the cdf of F--which is a weird way to name a distribution--, and then apply the formula proven above.
+$$F(x) = \int_{1}^{x}2/t^2 dt = -\frac{2}{t}\Big|_{1}^{x} = 2-\frac{2}{x}$$
+    
+Applying the formula from 4.20 we have:
+$$f_{max} = 2F(x)f(x) = 2(2-\frac{2}{x})\frac{2}{x^2} = \frac{8}{x^2}-\frac{8}{x^3}$$
+    
+And so, to find the expected value we have:
+$$E(X) = \int_{1}^{2}xf(x)dx =\int_{1}^{2} (\frac{8}{x}-\frac{8}{x^2})dx = (8ln(x)+\frac{8}{x})\Big|_{1}^{2} = 1.55  $$
+    
+####5.2
+
+A. 
+```{r}
+#Can only happen in one permutation, so:
+1/(4^4)
+```
+    
+B. 
+```{r}
+1 - (3/4)^4
+```
+   
+C. 
+```{r}
+#This can be calculated with the binomial! 
+#Since order matters, we are looking for Binom(4, .25), with X = 2.
+dbinom(2, 4, .25)
+
+```
+     
+####5.8
+```{r, fig.width=3, fig.height = 3}
+it <- 1000
+sam_mean <- rep(0, 1000)
+for(i in 1:1000){
+  sam <- rgamma(200, 5, rate = 1/4)
+  sam_mean[i] <- mean(sam)
+}
+
+hist(sam_mean)
+```
+    
+This is approximatelly a normal with:
+```{r}
+mean(sam_mean)
+
+sd(sam_mean)
+```
+
+    
+```{r, fig.width=3, fig.height = 3}
+hist(sam)
+
+mean(sam)
+
+sd(sam)
+```
+    
+```{r, fig.width=3, fig.height = 3}
+boot_mean <- rep(0, it)
+for(i in 1:it){
+  boot <- sample(sam, 200, replace = TRUE)
+  boot_mean[i] <- mean(boot)
+}
+
+hist(boot_mean)
+mean(boot_mean)
+sd(boot_mean)
+```
+     
+```{r}
+df <- data.frame(Mean <- c(20, mean(boot_mean)), SD <- c((4*sqrt(5))/sqrt(200), sd(boot_mean)))
+names(df)[1]<- "Mean"
+names(df)[2]<- "SD"
+print(df)
+```
+    
+```{r, fig.width=3, fig.height = 3}
+#n = 50
+sam_mean <- rep(0, 1000)
+for(i in 1:1000){
+  sam <- rgamma(50, 5, rate = 1/4)
+  sam_mean[i] <- mean(sam)
+}
+
+for(i in 1:it){
+  boot <- sample(sam, 200, replace = TRUE)
+  boot_mean[i] <- mean(boot)
+}
+
+hist(boot_mean)
+df <- data.frame(Mean <- c(20, mean(boot_mean)), SD <- c((4*sqrt(5))/sqrt(50), sd(boot_mean)))
+names(df)[1]<- "Mean"
+names(df)[2]<- "SD"
+print(df)
+ 
+#n = 10
+sam_mean <- rep(0, 1000)
+for(i in 1:1000){
+  sam <- rgamma(10, 5, rate = 1/4)
+  sam_mean[i] <- mean(sam)
+}
+
+for(i in 1:it){
+  boot <- sample(sam, 10, replace = TRUE)
+  boot_mean[i] <- mean(boot)
+}
+
+hist(boot_mean)
+df <- data.frame(Mean <- c(20, mean(boot_mean)), SD <- c((4*sqrt(5))/sqrt(10), sd(boot_mean)))
+names(df)[1]<- "Mean"
+names(df)[2]<- "SD"
+print(df)
+```
+   
+The bootstrap becomes less accurate at predicting the mean as the sample size becomes smaller. It still predicts the standard deviation fairly accuratelly, with some fluctuation.
+    
+####5.12    
+```{r, fig.width=3, fig.height = 3}
+#The first histogram reveals that there is one outlier, which is removed for the second histogram. After that most of the data is concentrated left of .2
+hist(f[,1], breaks=100)
+
+hist(f[-1,1])
+```
+    
+```{r, fig.width=3, fig.height = 3}
+#With outlier
+it <- 10000
+boot_mean <- rep(0, it)
+for(i in 1:it){
+  boot <- sample(f[,1], replace = TRUE)
+  boot_mean[i] <- mean(boot)
+}
+
+sd(boot_mean)
+quantile(boot_mean, c(.025, .975))
+
+#Without outlier
+boot_mean_1 <- rep(0, it)
+for(i in 1:it){
+  boot <- sample(f[-1,1], replace = TRUE)
+  boot_mean_1[i] <- mean(boot)
+}
+
+sd(boot_mean_1)
+quantile(boot_mean_1, c(.025, .975))
+```
+   
+Removing the outlier significantly reduced the bootstraped mean's standard error, as well as the upper bound (and the lower bound, but less) of the confidence interval.
+
+
+

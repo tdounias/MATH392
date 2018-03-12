@@ -1,0 +1,285 @@
+---
+title: "Problem Set 4 -- MATH392"
+author: "Theodore Dounias"
+date: "2/18/2018"
+output: pdf_document
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rotations)
+library(plotly)
+library(reshape2)
+```
+
+####6.2
+    
+We have:
+$$L(\lambda|x_1, x_2, ..., x_n) = P(X_1 = x_1, X_2 = x_2, ..., X_n = x_n) = P(X_1 = x_1)P(X_2 = x_2)...P(X_n = x_n)  $$
+   
+Which is true because $X_1, ..., X_n \sim Pois(\lambda)$ and are iid. Therefore we have:
+$$L(\lambda) = \prod_{i = 1}^{n}P(X_i = x_i) =  \prod_{i = 1}^{n}\frac{\lambda^{x_i}e^{-\lambda}}{x_i!} = \frac{\lambda^{\sum_{i = 1}^{n}x_i}e^{-n\lambda}}{\prod_{i = 1}^{n}x_i!}$$
+   
+Taking the natural log of both sides, we have:
+$$ln(L(\lambda)) = (\sum_{i = 1}^{n}(x_i)) ln(\lambda) -n\lambda-ln(\prod_{i = 1}^{n}x_i!)$$
+   
+If we differentiate, and set $L'(\lambda) = 0$ we have:
+$$0 = \sum_{i = 1}^{n}(x_i) \frac{1}{\lambda} -n$$
+    
+Solving for $\lambda$ we have the MLE:
+$$\hat\lambda = \frac{1}{n}\sum_{i = 1}^{n}x_i=\bar X$$
+     
+```{r}
+#I will simulate for n = 40, lambda = 1/4
+
+x <- rpois(100, .25)
+
+L_Pois <- function(lambda, x) {
+  n <- length(x)
+  p1 <- lambda^(sum(x))
+  p2 <- exp(-n*lambda) 
+  p3 <- prod(factorial(x))
+  (p1*p2)/p3
+}
+
+L <- function(lambda, x) {
+  prod(dpois(x, lambda))
+}
+
+lambda_vec <- seq(0, 1, by = .01)
+L_vec <- L_Pois(lambda_vec, x)
+L_vec2 <- L(lambda_vec, x)
+
+ggplot(data.frame(x = c(0, 1)), aes(x)) +
+  stat_function(fun = L_Pois, args = list(x = x))
+```
+    
+####6.8
+    
+The first step is similar to 6.2, since we have iid random variables. Therefore, starting off we have:
+$$L(\theta) = \prod_{i =1}^{n}\frac{\sqrt{2/\pi}~x_i^2e^{-\frac{x_i^2}{2\theta^2}}}{\theta^3} = (\frac{2}{\pi})^{n/2}\frac{(\prod_{i =1}^{n}x_i)^2e^{-\frac{\sum_{i=1}^{n}x_i^2}{2\theta^2}}}{\theta^{3n}}$$
+   
+By taking the natural logarithms we have:
+$$ln(L(\theta))=\frac{n}{2}ln(\frac{2}{\pi})+2ln(\prod_{i=1}^{n}x_i)-\frac{\sum_{i=1}^{n}x_i^2}{2\theta^2} -3nln(\theta)$$
+    
+Similarly, setting $L'(\theta)=0$ we have:
+$$0 = \frac{\sum_{i=1}^{n}x_i^2}{\theta^3}-\frac{3n}{\theta}\Rightarrow 0 = \sum_{i=1}^{n}x_i^2-3n\theta^2 \Rightarrow\theta = \sqrt{\frac{1}{3n}\sum_{i=1}^{n}x_i^2}$$  
+      
+Note here that this result for the MLE is unique because $\theta$ is necessarily positive; else the pdf would take negative values, which is impossible.
+    
+```{r, warning=FALSE}
+#Similarly n = 400, theta = 1. Note that the parametrization here is not by theta on the R function I am sampling from, therefore the center of the plot will not be at 1, but rather at kappa = 1 (whatever that is).
+
+x <- rmaxwell(400, 1)
+
+L_max <- function(theta, x) {
+  n <- length(x)
+  p1 <- (prod(x)^2)*exp(-sum(x^2)/(2*theta^2))
+  p2 <- (2/pi)^(n/2)
+  p3 <- theta^(3*n)
+  p1*p2/p3
+}
+
+ggplot(data.frame(x = c(0.5, 2)), aes(x)) +
+  stat_function(fun = L_max, args = list(x = x))
+```
+    
+       
+         
+####6.11
+    
+Since all $X_i's, Y_j's$ are independent of eachother, and between themselves, we can again omit the first step, and directly have:
+      
+$$L(\lambda) = \prod_{i = 1}^{n}\lambda e^{-\lambda x_i}\prod_{j = 1}^{m}2\lambda e^{-2\lambda y_i}=2^m\lambda^{n+m}e^{-\lambda(\sum_{i=1}^{n}x_i + 2\sum_{j=1}^{m}y_i)}$$
+     
+And again, for the sake of easy differentiation, we take the natural logarithm:
+$$ln(L(\lambda))=mln(2)+(n+m)ln(\lambda)-\lambda(\sum_{i=1}^{n}x_i + 2\sum_{j=1}^{m}y_i)$$
+    
+By setting $L'(\lambda)=0$ and differentiating we have:
+$$0=\frac{n+m}{\lambda}-\sum_{i=1}^{n}x_i - 2\sum_{j=1}^{m}y_i \Rightarrow\lambda = \frac{n+m}{\sum_{i=1}^{n}x_i + 2\sum_{j=1}^{m}y_i}$$
+    
+Which is always valid as an MLE, since the denominator is a sum of poisson values, and therefore necessarily non-zero. Also, for the sake of not typing endless amounts of alpha's and beta's, I will use a and b instead.
+     
+```{r}
+x <- rexp(40, .25)
+y <- rexp(30, .5)
+
+L_exp <- function(lambda, x, y) {
+  n <- length(x)
+  m <- length(y)
+  (2^m)*(lambda^(n+m))*(exp(-lambda*(sum(x) + 2*sum(y))))
+}
+
+lam_vec <- seq(from = 0, to = 2, by = .005)
+L_vec <- L_exp(lam_vec, x, y)
+
+df <- data.frame(x = lam_vec,
+                 y = L_vec)
+ggplot(df, aes(x = x, y = y)) +
+  geom_line()
+```
+     
+     
+####6.13
+    
+Again omitting the first step due to iid rv's we have:
+$$L(a)=\prod_{i=1}^{n}abx_i^{b-1}e^{-ax_i ^b}=(ab)^n(\prod_{i=1}^{n}x_i)^{b-1}e^{-a\sum_{i=1}^{n}(x_i ^b)}$$
+     
+Taking the natural logarithm on both sides we have:
+$$ln(L(a))=n(ln(a)+ln(b))+(b-1)\sum_{i=1}^{n}ln(x_i)-a\sum_{i=1}^{n}(x_i ^b)$$
+    
+Assuming b is fixed, we can differentiate with regards to a and set $L'(a) = 0$, which results in:
+$$0 = \frac{n}{a} - \sum_{i=1}^{n}(x_i ^b) \Rightarrow a = \frac{n}{\sum_{i=1}^{n}(x_i ^b)}$$
+    
+If we did not assume that b is fixed, the two equations we need to solve would be:
+$$\frac{\partial L(a, b)}{\partial a} = 0, ~~~~ \frac{\partial L(a, b)}{\partial b} = 0$$
+    
+```{r}
+#For a=1, b=2
+
+dist <- function(a, b, x){
+  a*b*(x^(b-1))*exp(-a*(x^b))
+}
+
+#Accept/Reject was added after Friday's class!
+n <- 1000
+x <- runif(n)
+u <- runif(n, min = 0, max = 10)
+df <- data.frame(x = x, 
+                 y = u, 
+                 accept = u < dist(1, 2, x))
+#Accept/Reject was added after Friday's class!
+
+
+L_13 <- function(a, b, x){
+  prod(a*b*(x^(b-1))*exp(-a*(x^b)))
+}
+
+x <- df$x[as.logical(df$accept)]
+
+a <- seq(.1, 4, length.out = 500)
+b <- seq(.1, 4, length.out = 500)
+
+l_surface <- matrix(0, nrow = length(a), ncol = length(b))
+for(i in 1:nrow(l_surface)) {
+  for(j in 1:ncol(l_surface)) {
+    l_surface[i, j] <- L_13(a[i], b[j], x)*1000
+  }
+}
+
+#This works better now, but still not maxing out at a, b...
+plot_ly(z = ~l_surface) %>% 
+  add_surface(x = a, y = b)
+```
+     
+####6.14
+    
+The first moment is:
+$$\mu_1 = \frac{1}{2}(a+b)\simeq \bar X=\frac{1}{5}\sum_{i =1}^{5}\it x_i$$
+    
+The second moment is:
+$$\mu_2 = \sigma^2 +\mu^2 =\frac{1}{12}(b-a)^2 +\frac{1}{2}(a+b)\simeq \frac{1}{5}\sum_{i =1}^{5} x_i^2 +(\frac{1}{5}\sum_{i =1}^{5}x_i)^2 $$
+   
+Using R we can calculate:
+```{r}
+sam <- c(2, 3, 5, 9, 10)
+
+#a+b from the first moment
+2*mean(sam)
+
+#b-a from the second moment
+sqrt(12*((sum(sam^2)/5)-(mean(sam))^2))
+```
+    
+These equasions give $\hat b_{MOM} = 11.3, ~~~\hat a_{MOM} = .3$
+      
+####6.20
+
+```{r}
+sam <- c(.4, .5, .25, .9, .92)
+5/sum(log(sam))
+
+mean(sam)
+```
+
+    
+For the MLE, since we have iid rv's we can write:
+$$L(\theta)=\prod_{i=1}^{5}\theta x_i^{\theta -1}=\theta^5\prod_{i=1}^{5}x_i^{\theta - 1}$$
+   
+Taking the natural logarithm of both sides:
+$$ln(L(\theta))=5ln(\theta) + (\theta - 1)\sum_{i=1}^{5}ln(x_i)$$
+    
+Differentiating and setting $L'(\theta) = 0$ we have:
+$$0 = \frac{5}{\theta} + \sum_{i=1}^{5}ln(x_i) \Rightarrow \theta = 1.57$$
+     
+For a Method of Moments estimator we start with the first moment:
+$$\mu_1 = E(X) = \int_{0}^{1}\theta x^{\theta}dx = \frac{\theta}{\theta + 1}x^{\theta + 1}\Big|_{0}^{1} = \frac{\theta}{\theta + 1} \simeq \bar X =  \bar X=\frac{1}{5}\sum_{i =1}^{5} x_i = .594 \Rightarrow .406\times\theta = .594 \Rightarrow\theta = 1.46$$
+     
+####6.25
+    
+The condition is $a_1 + a_2 + ... + a_n = 1$, since if we set $E(X) - \mu = 0$:
+$$E(X) = a_1E(X_1)+...+a_nE(X_n) \Rightarrow \mu = a_1\mu +...+a_n\mu \Rightarrow a_1 + a_2 + ... + a_n = 1$$
+    
+####6.27
+    
+The bias of $\hat \sigma^2$ is:
+$$Bias = E(\hat \sigma^2) - \sigma^2 = \frac{1}{n}E(\sum_{i = 1}^{n}(x_i - \bar x)^2) - \sigma^2$$
+   
+By theorem 6.2, this is equivalent to:
+$$\frac{n -1}{n}\sigma^2 -\sigma^2=-\frac{\sigma^2}{n}$$
+    
+For the variance, we follow the result of theorem B.16. We have:
+$$Var(\hat \sigma^2)=Var(\frac{1}{n}\frac{\sigma^2}{\sigma^2}\sum_{i=1}^{n}(x_i - \bar x)^2)=\frac{\sigma^4}{n^2}Var(\frac{1}{\sigma^2}\sum_{i=1}^{n}(x_i - \bar x)^2)$$
+    
+By B.16, $\frac{1}{\sigma^2}\sum_{i=1}^{n}(x_i - \bar x)^2 =\frac{n-1}{\sigma^2}S^2 \sim \it X^2_{n-1} \it$, which means that its variance is known and equal to $2df$. Therefore:
+$$Var(\sigma^2) = \frac{\sigma^4}{n^2}2(n-1)$$     
+     
+By a result for the MSE from class, we have:
+$$MSE = Var(\hat\sigma^2) + (Bias(\hat\sigma^2))^2 = (2n -1)\frac{\sigma^4}{n^2}$$
+    
+####6.30
+    
+From the last equation in the previous excercise we can conclude that $$MSE(\hat\theta_1) = 25  >  MSE(\hat\theta_2)=13$$.
+     
+For the second part of this excercise:
+$$25 > 4+b^2 \Rightarrow 21 > b^2 \Rightarrow0 < b < \sqrt{21}$$
+    
+####6.31
+      
+```{r, fig.width=3, fig.height = 3}
+MSE_curve <- function(n){
+  curve(x*(1-x)/n, from = 0, to=1, xlab = "p", ylab = "MSE")
+  curve(n*(1-x)*x/(n+2)^2 + (1-2*x)^2/(n+2)^2, add= TRUE, col = "blue", lty = 2)
+}
+
+MSE_curve(30)
+MSE_curve(50)
+MSE_curve(100)
+MSE_curve(200)
+```
+       
+As we increase sample size, the two estimators start to converge. This would mean that while the first estimator is unbiased, the second estimator is whatever the equivalent for being asymptotically unbiased would be in terms of MSE; as the sample size grows, it converges to the better estimator.
+    
+####6.37
+    
+We need to show that the bias is zero, which means:
+
+$$E(\bar X) = \frac{1}{2}E(X_1+X_2) = \frac{1}{2}(E(X_1) + E(X_2)) =  \frac{2}{2\lambda} =\frac{1}{\lambda}$$
+    
+Since the rv's are iid, we can write:
+$$Var(\bar X) = \frac{1}{4}[2Var(X)]=\frac{1}{2\lambda^2}$$
+    
+For the third question:
+$$E(\sqrt{X_1X_2}) = \frac{1}{2}E[(\sqrt{X_1} +\sqrt{X_2})^2 - (X_1 + X_2)] = \frac{1}{2}E((\sqrt{X_1} +\sqrt{X_2})^2) -\frac{1}{\lambda}$$
+   
+By substituting variance in, and because we have iid's, we get the following:
+    
+$$E(\sqrt{X_1X_2}) = \frac{1}{2}[Var(\sqrt{X_1} +\sqrt{X_2}) + (E(\sqrt{X_1} +\sqrt{X_2}))^2] -\frac{1}{\lambda} = \frac{1}{2}[Var(\sqrt{X_1}) +Var(\sqrt{X_2}) + \frac{\pi}{\lambda}] - \frac{1}{\lambda}$$
+    
+We can calculate this variance as $Var(\sqrt{X_i}) = E(X_i) - E^2(\sqrt{X_i}) = \frac{1}{\lambda} - \frac{\pi}{4\lambda}$. So:
+     
+$$E(\sqrt{X_1X_2})= \frac{1}{\lambda} + \frac{\pi}{4\lambda} -\frac{1}{\lambda}= \frac{\pi}{4\lambda}$$
+     
+For the last part, the bias is:
+$$E(\sqrt{X_1X_2}) - \frac{1}{\lambda} = \frac{\pi-4}{4\lambda}$$

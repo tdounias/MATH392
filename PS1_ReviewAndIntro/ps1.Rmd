@@ -1,0 +1,164 @@
+---
+title: "Problem Set 1 -- MATH 392"
+author: "Theodore Dounias"
+date: "1/25/2018"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(resampledata)
+library(tidyverse)
+
+```
+
+####1.1
+
+a) Population is all high school students, sample is 2000 students, 47% is a statistic.
+   
+b) From what I recall the 2000 census was still just basically asking everyone, so the US population is the Population, and 13,9% is a parameter.
+   
+c) This only draws a reslt for the 2006-2007 season, so the population is all players in that season, and 78,93 is a parameter. If we were using this season as a sample for all seasons, then it would be a statistic.
+    
+d) The Population is all US adults, 1.025 is the sample size, 47% is a statistic.
+   
+####1.3
+   
+a) An experiment, as the researchers involved had input into the environment of the study.
+   
+b  c) No to b, because no to c. Generally a study needs to be valid and ratifiable. This means that the methods and processes used should be scientificaly rigorous, and that it can be reproduced in a different environment. Here we have one study, on a sample that is significantly smaller than the population, and lacking a relevant control group (people on a normal--for a diabetic at least--diet). Therefore, the study is neither valid or ratifiable at this point, so no conclusions can be safely drawn.
+   
+####1.5
+   
+a) 0,00001
+   
+b) 
+```{r}
+(1 - 0.00001)^2000
+```
+   
+c) About 69.314 samples must be selected
+```{r}
+(1 - 0.00001)^69314
+```
+   
+####2.4
+   
+a) 
+```{r}
+depart <- FlightDelays %>%
+  group_by(DepartTime) %>%
+  mutate(count = 1) %>%
+  summarise(n = sum(count))
+
+depart
+
+ggplot(FlightDelays, aes(DepartTime)) +
+  geom_bar()
+```
+    
+b) 
+```{r}
+day_con <- FlightDelays %>%
+  select(Day, Delayed30)
+
+day_con$Delayed30 <- as.integer(day_con$Delayed30)
+
+day_con$Delayed30 <- day_con$Delayed30 - 1
+
+day_con <- day_con %>%
+  group_by(Day) %>%
+  mutate(count = 1) %>%
+  summarise(Delayed = sum(Delayed30), Not_Delayed = sum(count) - sum(Delayed30),
+            Proportion = sum(Delayed30)/sum(count))
+  
+day_con
+```
+   
+c) 
+```{r}
+ggplot(FlightDelays) +
+  geom_boxplot(aes(y = FlightLength, x = Delayed30))
+``` 
+    
+d) Large--I assume intercontinental and international--flights seem to be delayed significantly less, and all the delays centered on 3-4 hour flights. This might be because of international conections, or because of airports prioritizing longer flights, and not caring that much about small local ones, when they assign runways to planes.
+     
+####2.8
+    
+a) Integrating by parts we get: $$E(X) = \int \lambda x e^{-\lambda x} dx  =  -x e^{-\lambda x} \Big|_{0}^{\infty} - \int_{0}^{\infty} e^{-\lambda x}dx = \frac{1}{\lambda} $$
+    
+Here we can use the integral definition of quantile to get: $$ \int_{0}^{a} \lambda e^{-\lambda x} dx = p \Rightarrow 1+e^{-\lambda a} = p \Rightarrow a = \frac{-ln(1 - p)}{\lambda} $$
+   
+So the quantiles are $\frac{ln(\frac{4}{3})}{\lambda}$ and $\frac{ln(4)}{\lambda}$ 
+    
+b)  We have: $$E(X) = \int_{1}^{\infty} \frac{a}{x^{a}} dx = \frac{ax^{1-a}}{1-a}\Big|_{1}^{\infty} =  
+    \begin{cases}
+       \infty  \quad a\le1\\
+       \frac{a}{a-1} \quad a < 1 \\
+     \end{cases}$$
+     
+Again for the quantile: $$ \int_{1}^{b} \frac{a}{x^{a + 1}}  dx = p \Rightarrow 1-k^{- a} = p \Rightarrow k = {(1-p)}^{-1/a} $$
+    
+So we have the quantiles ${3/4}^{-1/a}$ and ${1/4}^{-1/a}$.
+    
+####2.9
+   
+Using exactly the same method used above, which I will omit due to LaTeX repetitive typing, I end up with the expression $p_{th} quantile = \frac{3}{\sqrt{1-p}}$
+    
+####2.10
+   
+```{r}
+qbinom(0.05, 20, 0.3)
+```
+     
+####2.11
+    
+a) 
+```{r}
+s <- rgamma(20, 2, 2)
+
+df <- data.frame(x = s)
+
+ggplot(df, aes(x = x)) +
+  geom_density(col = "red") +
+  stat_function(fun = dgamma, args=list(shape=2, rate=2))
+
+n<-20
+
+df <- data.frame(x = qgamma(1:n/n, 2, 2),
+                 y = sort(s))
+ggplot(df, aes(x = x, y = y)) +
+  geom_point() +
+  xlab("quantiles of gamma") +
+  ylab("empirical quantiles")
+```
+     
+b)   
+```{r}
+#I know this is your code but it is literally just the same thing asked for
+
+n <- 20
+x <- rnorm(n)
+df <- data.frame(x = qnorm(1:n/n),
+                 y = sort(x))
+ggplot(df, aes(x = x, y = y)) +
+  geom_point() +
+  xlab("quantiles of standard normal") +
+  ylab("empirical quantiles")
+    
+df <- data.frame(x = qt(1:n/n, 1),
+                 y = sort(x))
+ggplot(df, aes(x = x, y = y)) +
+  geom_point() +
+  xlab("quantiles of t-distribution") +
+  ylab("empirical quantiles")
+
+```
+
+
+
+
+

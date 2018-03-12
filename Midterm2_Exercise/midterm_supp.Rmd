@@ -1,0 +1,35 @@
+---
+title: "Supplement--Midterm II"
+author: "Theodore Dounias"
+date: "3/8/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+I will try to reach a parametric equasion that includes b, a, and n. I will then solve for each value of n that are asked for. First, from the cdf for a N(100, 15/sqrt(n)) distribution I have:
+$$P(\bar X < q) = 1-a \Rightarrow P(\frac{\bar X - 100}{15/ \sqrt n}<\frac{q - 100}{15/ \sqrt n})=1-a\Rightarrow F_Z(\frac{q - 100}{15/ \sqrt n}) = 1-a \Rightarrow q = \frac{15}{\sqrt n}F_z^{-1}(1 - a) +100$$
+    
+Where $F_Z^{-1}$ is the inverse cdf of the standard normal. Assuming now that our initial X derives from a N(105, 15/sqrt(n)) as we did in class, we have a second equation:
+    
+$$F(q)=b\Rightarrow F_Z(\frac{q - 105}{15/ \sqrt n})=b \Rightarrow q = \frac{15}{\sqrt n}F_z^{-1}(b) + 105$$
+    
+If we equate and solve for n and alpha = .05 we have:
+$$n = 9(F_z^{-1}(1-a) - F_z^{-1}(b))^2 \Rightarrow n = 9(1.64 - F_z^{-1}(b))^2$$
+   
+I can also generalize this equasion to:
+$$n = \frac{\sigma^2}{(difference~in~means)^2}(F_z^{-1}(1-a) - F_z^{-1}(b))^2$$
+   
+Using r we have:
+```{r}
+n_power <- function(a, b){
+  9*(qnorm(1-a) - qnorm(b))^2
+}
+
+ceiling(n_power(.05, .3))
+ceiling(n_power(.05, .2))
+ceiling(n_power(.05, .05))
+```
+
