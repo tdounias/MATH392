@@ -1,0 +1,75 @@
+---
+title: "Problem Set 6 -- MATH 392"
+author: "Theodore Dounias"
+date: "3/17/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+
+serial <- c(47, 126, 285, 318, 142, 55, 231, 102, 
+       164, 85, 242, 62, 289, 290)
+```
+
+    
+####1.1
+    
+I will use simulation to first find the sampling distribution of $\hat{\theta}_{MLE, corr} = \frac{n + 1}{n} X_{max}$; I will draw samples of size 14 from a Unif(0, 345) and calculate the test statistic. I will be rounding the samples up, assuming there is no panzer tank with a serial number of 0. In this way each serial number has an equal probability of being selected.
+    
+```{r}
+theta_mle <- ceiling((15/14)*max(serial))
+
+it <- 500000
+theta_mle_sim <- rep(0, it)
+x <- rep(0, 14)
+for(i in 1:it){
+  x <- ceiling(runif(14, 0, 345))
+  theta_mle_sim[i] <-  (15/14)*max(x)
+}
+
+data <- data.frame(theta_mle_sim)
+
+ggplot(data) +
+  geom_histogram(aes(theta_mle_sim), binwidth = 3, col = "skyblue", fill = "blue") +
+  geom_vline(aes(xintercept = (15/14)*max(serial)), col = "red")
+
+p_value <- (sum(theta_mle_sim >= theta_mle)+1)/(it + 1)
+p_value
+```
+     
+####1.2
+   
+$ \hat{\theta}_{MOM} = 2 \bar{X} $
+    
+```{r}
+theta_mom <- ceiling(2*mean(serial))
+
+it <- 500000
+theta_mom_sim <- rep(0, it)
+x <- rep(0, 14)
+for(i in 1:it){
+  x <- ceiling(runif(14, 0, 345))
+  theta_mom_sim[i] <-  2*mean(x)
+}
+
+data <- data.frame(theta_mom_sim)
+
+ggplot(data) +
+  geom_histogram(aes(theta_mom_sim), binwidth = 3, col = "skyblue", fill = "blue") +
+  geom_vline(aes(xintercept = ceiling(2*mean(serial))), col = "red")
+
+p_value <- (sum(theta_mom_sim >= theta_mom)+1)/(it + 1)
+p_value
+```
+    
+####1.3
+    
+Hypothesis testing under this framework is susceptible to type I and type II errors. A type I error would occur if we rejected the null incorrectly. In this specific example, if we rejected the null, we would risk Germany regrouping and increasing their resources while we stand by, despite our capability of dealing a deathblow. 
+    
+A Type II error occurs when we accept the null hypothesis, and the alternative is true. In the scenario before us, we would overstep into Germany and would likelly suffer a critical defeat.
+      
+####1.4
+    
