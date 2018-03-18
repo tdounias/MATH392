@@ -73,3 +73,66 @@ A Type II error occurs when we accept the null hypothesis, and the alternative i
       
 ####1.4
     
+I will again use a simulation approach to make these calculations. I know that the following two equasions connect power and alpha in this one sided test: 
+   
+$$P(\hat\theta >q) = 1-\alpha, ~~ 1-P(\theta > q) = \beta$$
+     
+Here theta is the parameter from the true distribution, and theta hat is assuming that the null is true.   
+     
+With that in mind, I need to simulate the distributions and calculate the probabilities above at a 99% confidence level. I choose .99 and not .95 due to the increased need for certainty, as a miscalculation might lead to a large military defeat. I will write this as a function to save space:
+    
+```{r}
+mom <- function(x){
+  ceiling(2*mean(x))
+}
+
+mle <- function(x){
+  ceiling((18/17)*max(x))
+}
+
+power <- function(true, funct){
+  it <- 10000
+  
+  alpha <- .99
+  
+  #Distribution under the null
+  h0_dist <- rep(0, it)
+  for(i in 1:it){
+    x <- ceiling(runif(17, 0, 345))
+    h0_dist[i] <- funct(x) 
+  }
+  
+  #True distribution
+  true_dist <- rep(0, it)
+  for(i in 1:it){
+    x <- ceiling(runif(17, 0, true))
+    true_dist[i] <- funct(x) 
+  }
+  
+  #Calculate value 
+  q <- quantile(h0_dist, probs = alpha)
+  
+  (sum(true_dist >= q) + 1)/(it+1)
+  
+}
+
+
+mle_power <- c(power(325, mle), power(335, mle), power(345, mle), 
+                power(355, mle), power(365, mle))
+
+mom_power <- c(power(325, mom), power(335, mom), power(345, mom), 
+                power(355, mom), power(365, mom))
+
+diffs <- seq(325, 365, 10)
+
+data <- data.frame(mle_power, mom_power, diffs)
+
+
+#I graph logged values because of large divergence in values
+ggplot(data, aes(x = diffs)) +
+  geom_line(aes(y = log(mle_power)), col = "red") +
+  geom_line(aes(y = log(mom_power)), col = "blue") +
+  xlab("Means") +
+  ylab("Logged Power")
+```
+
