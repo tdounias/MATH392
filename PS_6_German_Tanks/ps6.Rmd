@@ -42,7 +42,7 @@ p_value
      
 ####1.2
    
-$ \hat{\theta}_{MOM} = 2 \bar{X} $
+$\hat{\theta}_{MOM} = 2 \bar{X}$
     
 ```{r}
 theta_mom <- ceiling(2*mean(serial))
@@ -127,12 +127,15 @@ diffs <- seq(325, 365, 10)
 
 data <- data.frame(mle_power, mom_power, diffs)
 
+data <- data %>%
+  gather("type", "Value", 1:2)
 
 #I graph logged values because of large divergence in values
 ggplot(data, aes(x = diffs)) +
-  geom_line(aes(y = log(mle_power)), col = "red") +
-  geom_line(aes(y = log(mom_power)), col = "blue") +
+  geom_line(aes(y = log(Value), col = type)) +
   xlab("Means") +
   ylab("Logged Power")
 ```
-
+       
+I would use the MLE estimator; the power of MOM tests seem relativelly static, while with some tweeks to the mean I use for the test it seems I could get a significantly more statistically potent result.
+  
