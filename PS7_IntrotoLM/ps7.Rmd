@@ -91,7 +91,7 @@ glance(lm1)[1]
 The slope coefficient is statisticaly significant, positive, and equal to 10.83; this means that for an increase of one birth, there is approximatelly a 10.83 increase in illiteracy rates. The residual sum of squares is about .6, which signifies the error rate that the output line has in predicting the data.
     
 C.   
-```{r, warning= FALSE, fig.height=2, fig.width = 3, fig.align='center'}
+```{r, warning= FALSE, fig.height=3, fig.width = 4, fig.align='center'}
 
 plot(lm1)
 ```
