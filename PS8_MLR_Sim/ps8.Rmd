@@ -1,0 +1,42 @@
+---
+title: "Problem Set 8 -- MATH392"
+author: "Theodore Dounias"
+date: "3/31/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+####Simulator
+```{r}
+# set params
+b0 <- 2.5
+b1 <- 1.9
+b2 <- 8.1
+sigma <- 4
+
+beta<- matrix(c(b0, b1, b2), nrow = 3, ncol = 1)
+
+# complete specification
+n <- 1000 
+epsilon <- matrix(rnorm(n, 0, sigma), nrow = n, ncol = 1)
+x <-matrix(c(rep(1, n), x_1 <- rexp(n, .2), x_2 <- rexp(n, .1)), nrow = n, ncol = 3)
+
+# simulate ys
+y_simulate <- function(x){
+  y <- x%*%beta + epsilon
+}
+
+y_sim <- y_simulate(x)
+```
+     
+####Sampling Distribution
+```{r}
+#Beta_1
+
+
+```
+
