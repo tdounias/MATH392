@@ -232,4 +232,28 @@ y <- rpois(22, 2)
 joint_post(4, 2, 38, x, y)
 ```
     
+Since mu, m, and lambda are independent, I can draw using in-built R functions for each of them independently and find the probability density of the joint by multiplying individual densities together. Therefore, I will use the same distributions used with the Gibbs sampler.  
+  
+```{r}
+sample <- function(n){
+  lambda <- rgamma(n, fi, ni)
+  mu <- rgamma(n, alpha, beta)
+  m <- runif(n, 1, 59)
+  prob <- rep(0, n)
+  for(i in 1:n){
+    prob[i] <- dgamma(lambda[i], fi, ni)*dgamma(mu[i], alpha, beta)*(1/59)
+  }
+  df <- data.frame(lambda, mu, m, prob)
+  df
+}
+
+data <- sample(100000)
+
+joint_post_prob <- rep(0, 100000)
+for(i in 1:100000){
+joint_post_prob[i] <- joint_post(data$lambda[i], data$mu[i], data$m[i], x, y)
+}
+keep
+keep <- rbinom(100000, 1, p = data$prob/joint_post_prob)
+```
 
