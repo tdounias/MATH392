@@ -43,6 +43,7 @@ model3 <- function(eta){
   atan(eta/2)/(atan(eta/2) + atan(2/eta))
 }
 
+#Placeholder
 model4 <- function(eta){
   1
 }
@@ -72,7 +73,7 @@ likelihood(model3)
 
 dt <- data.frame(c("Model 1", "Model 2", "Model 3", "Model 4"), c(likelihood(model1), likelihood(model2), likelihood(model3), likelihood(model4)))
 
-names(dt) <- c("Model", "Inverse Likelihood")
+names(dt) <- c("Model", "Log Likelihood")
 
 dt %>%
   kable()
