@@ -210,20 +210,12 @@ beta <- 4
 fi <- 8
 ni <- 2
 
-full_joint <- function(lambda, mu, m, y_l, y_mu){
+joint_post <- function(lambda, mu, m, y_l, y_mu){
   a <- prod((mu^y_mu * exp(-mu) )/factorial(y_mu))
   b <- prod((lambda^y_l * exp(-lambda) )/factorial(y_l))
   c <- dgamma(mu, alpha, rate = beta)
   d <- dgamma(lambda, fi, rate = ni)
   a*b*c*d
-}
-
-data_prob <- function(lambda, mu, y_l, y_mu){
-  prod(dpois(y_mu, mu))*prod(dpois(y_l, lambda))  
-}
-
-joint_post <- function(lambda, mu, m, y_l, y_mu){
-  full_joint(lambda, mu, m, y_l, y_mu)/data_prob(lambda, mu, y_l, y_mu)
 }
 
 #Testing whether it works
@@ -232,28 +224,53 @@ y <- rpois(22, 2)
 joint_post(4, 2, 38, x, y)
 ```
     
-Since mu, m, and lambda are independent, I can draw using in-built R functions for each of them independently and find the probability density of the joint by multiplying individual densities together. Therefore, I will use the same distributions used with the Gibbs sampler.  
+I will draw from a combination of three uniform distributions.
   
 ```{r}
 sample <- function(n){
-  lambda <- rgamma(n, fi, ni)
-  mu <- rgamma(n, alpha, beta)
+  lambda <- runif(n, 0, 7)
+  mu <- runif(n, 0, 7)
   m <- runif(n, 1, 59)
   prob <- rep(0, n)
   for(i in 1:n){
-    prob[i] <- dgamma(lambda[i], fi, ni)*dgamma(mu[i], alpha, beta)*(1/59)
+    prob[i] <- 1/49*58
   }
   df <- data.frame(lambda, mu, m, prob)
   df
 }
 
-data <- sample(100000)
+data <- sample(1000000)
 
-joint_post_prob <- rep(0, 100000)
-for(i in 1:100000){
+joint_post_prob <- rep(0, 1000000)
+for(i in 1:1000000){
 joint_post_prob[i] <- joint_post(data$lambda[i], data$mu[i], data$m[i], x, y)
 }
+
+
+keep <- (joint_post_prob/max(joint_post_prob))/data$prob > runif(1) 
+
+data$keep <- keep
 keep
-keep <- rbinom(100000, 1, p = data$prob/joint_post_prob)
+
+df <- data %>%
+  filter(keep == "TRUE") %>%
+  slice(-(1:5000))
+
+
+
+#Scatterplot
+ggplot(df, aes(x = df$mu, y = df$lambda, col = df$m)) +
+  geom_point()
+
+#Filtered Scatterplot
+
+df1 <- df %>%
+  filter(m <= 10 | m >= 50)
+
+ggplot(df1, aes(x = df1$mu, y = df1$lambda, col = df1$m)) +
+  geom_point()
+
+ggplot(df, aes(x = df$mu, y = df$lambda)) +
+  stat_summary_hex(aes(z = df$m), fun = "mean")
 ```
 
