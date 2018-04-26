@@ -203,66 +203,55 @@ Both distributions for lambda and mu are more sharply distributed and centered a
 #PART III
 
 ```{r}
-#Creating the Joint Posterior Function
+set.seed(497)
 n <- 60
+m <- 38
+mu <- 2
+lambda <- 4
+y_mu <- rpois(m, lambda = mu)
+y_l <- rpois(n - m, lambda = lambda)
+y <- c(y_mu, y_l)
 alpha <- 10
 beta <- 4
-fi <- 8
-ni <- 2
+ni <- 8
+fi <- 2
 
-joint_post <- function(lambda, mu, m, y_l, y_mu){
-  a <- prod((mu^y_mu * exp(-mu) )/factorial(y_mu))
-  b <- prod((lambda^y_l * exp(-lambda) )/factorial(y_l))
-  c <- dgamma(mu, alpha, rate = beta)
-  d <- dgamma(lambda, fi, rate = ni)
-  a*b*c*d
+joint_post <- function(lambda, mu, m, y){
+  mu^(alpha + sum(y[1:m]) - 1) *
+    exp(-(beta + m) * mu) *
+    lambda^(ni + sum(y[(m+1):n]) - 1) *
+    exp(-(fi + n - m) * lambda)
 }
 
-#Testing whether it works
-x <- rpois(38, 4) 
-y <- rpois(22, 2)
-joint_post(4, 2, 38, x, y)
-```
-    
-I will draw from a combination of three uniform distributions.
-  
-```{r}
-sample <- function(n){
-  lambda <- runif(n, 0, 7)
-  mu <- runif(n, 0, 7)
-  m <- runif(n, 1, 59)
-  prob <- rep(0, n)
-  for(i in 1:n){
-    prob[i] <- 1/49*58
-  }
-  df <- data.frame(lambda, mu, m, prob)
+params_df <- function(it){
+  lambda <- runif(it, 0, 7)
+  mu <- runif(it, 0, 7)
+  m <- base::sample(1:59, size = it, replace = TRUE)
+  df <- data.frame(lambda, mu, m)
   df
 }
 
-data <- sample(1000000)
+it <- 1e6
 
-joint_post_prob <- rep(0, 1000000)
-for(i in 1:1000000){
-joint_post_prob[i] <- joint_post(data$lambda[i], data$mu[i], data$m[i], x, y)
+params <- params_df(it)
+
+joint_post_prob <- rep(0, it)
+for(i in 1:it){
+joint_post_prob[i] <- joint_post(params$lambda[i], params$mu[i], params$m[i], y)
 }
 
+keep <- joint_post_prob/max(joint_post_prob) > runif(it)
 
-keep <- (joint_post_prob/max(joint_post_prob))/data$prob > runif(1) 
+params$keep <- keep
 
-data$keep <- keep
-keep
-
-df <- data %>%
-  filter(keep == "TRUE") %>%
-  slice(-(1:5000))
-
-
+df <- params %>%
+  filter(keep)
 
 #Scatterplot
 ggplot(df, aes(x = df$mu, y = df$lambda, col = df$m)) +
   geom_point()
 
-#Filtered Scatterplot
+#Filtered Scatterplots
 
 df1 <- df %>%
   filter(m <= 10 | m >= 50)
@@ -273,4 +262,5 @@ ggplot(df1, aes(x = df1$mu, y = df1$lambda, col = df1$m)) +
 ggplot(df, aes(x = df$mu, y = df$lambda)) +
   stat_summary_hex(aes(z = df$m), fun = "mean")
 ```
-
+    
+The plots produced here look very similar to those from the Gibbs sampler. The benefits from the rejection sampler are that it is less intensive on the calculus side, and does not require a full calculation of all the posteriors. It is, however, more computationally intensive for my processor to handle. Both methods need some for of knowledge on the parameters we wish to calculate. If, for example, I would have chosen a different range for lambda or mu, the results for the rejection sampler would have been innacurrate, while the Gibbs sampler needs definition of priors. The Gibbs might have the advatage here, as what matters most is the support of the prior distributions, not having some sort of semi-accurate guess as to the real values.  
